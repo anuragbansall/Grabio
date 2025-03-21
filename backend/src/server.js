@@ -9,11 +9,15 @@ import paymentRouter from "./routes/payment.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import reviewRouter from "./routes/review.routes.js";
 import connectDB from "./config/db.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use(cookieParser());
 
 // auth routes
 app.use("/api/auth", authRouter);
