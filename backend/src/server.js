@@ -8,6 +8,7 @@ import orderRouter from "./routes/order.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import categoryRouter from "./routes/category.routes.js";
 import reviewRouter from "./routes/review.routes.js";
+import connectDB from "./config/db.js";
 
 dotenv.config();
 
@@ -40,4 +41,5 @@ app.use("/api/reviews", reviewRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  connectDB();
 });
