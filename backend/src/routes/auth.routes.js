@@ -4,6 +4,7 @@ import {
   logout,
   register,
   showProfile,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -25,8 +26,6 @@ router.post("/reset-password/:token", (req, res) => {
 
 router.get("/profile", protect, showProfile);
 
-router.put("/profile", (req, res) => {
-  res.send("Update profile");
-});
+router.put("/profile", protect, updateProfile);
 
 export default router;
