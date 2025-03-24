@@ -1,33 +1,29 @@
 import express from "express";
+import {
+  createProduct,
+  getProducts,
+  getProductById,
+  getProductByCategory,
+  getProductByKeyword,
+  updateProduct,
+  deleteProduct,
+} from "../controllers/product.controller.js";
+import { protect } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  res.send("Product created");
-});
+router.post("/", protect, createProduct);
 
-router.get("/", (req, res) => {
-  res.send("Product list");
-});
+router.get("/", getProducts);
 
-router.get("/:id", (req, res) => {
-  res.send("Product detail");
-});
+router.get("/:id", getProductById);
 
-router.get("/category/:category", (req, res) => {
-  res.send("Products by category");
-});
+router.get("/category/:category", getProductByCategory);
 
-router.get("/search/:keyword", (req, res) => {
-  res.send("Products by keyword");
-});
+router.get("/search/:keyword", getProductByKeyword);
 
-router.put("/:id", (req, res) => {
-  res.send("Product updated");
-});
+router.put("/:id", protect, updateProduct);
 
-router.delete("/:id", (req, res) => {
-  res.send("Product deleted");
-});
+router.delete("/:id", protect, deleteProduct);
 
 export default router;
