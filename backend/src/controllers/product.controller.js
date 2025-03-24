@@ -9,10 +9,6 @@ export const createProduct = async (req, res) => {
 
   const user = req.user;
 
-  if (user.role !== "admin") {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-
   try {
     const product = new Product({
       name,
@@ -104,10 +100,6 @@ export const updateProduct = async (req, res) => {
   const { name, description, price, category, stock, images } = req.body;
   const productId = req.params.id;
 
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Unauthorized" });
-  }
-
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       productId,
@@ -129,10 +121,6 @@ export const deleteProduct = async (req, res) => {
 
   try {
     const product = await Product.findById(productId);
-
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
