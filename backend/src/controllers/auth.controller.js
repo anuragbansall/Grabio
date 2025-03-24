@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, role, address } = req.body;
+  const { name, email, password, address } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "Please fill in all fields" });
@@ -18,16 +18,15 @@ export const register = async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role,
       address,
+      role: "user",
     });
 
     if (newUser) {
@@ -84,6 +83,8 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   res.clearCookie("token").json({ message: "Logged out" });
+  res.cookie("token", "", { expires: new Date(0) });
+  res.status(200).json({ message: "Logged out" });
 };
 
 export const showProfile = async (req, res) => {
@@ -102,37 +103,53 @@ export const showProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  const { name, email, password, address } = req.body;
+  const { name, email, address } = req.body;
 
   try {
-    let user = await User.findById(req.user.id);
-    if (!user) {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, email, address },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (email && email !== user.email) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const createAdmin = async (req, res) => {
+  const { name, email, password, address } = req.body;
+
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "Please fill in all fields" });
+  }
+
+  try {
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // Update fields only if provided
-    const updatedFields = { name, email, address };
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Hash password only if provided
-    if (password) {
-      const salt = await bcrypt.genSalt(10);
-      updatedFields.password = await bcrypt.hash(password, salt);
-    }
+    const adminUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      address,
+      role: "admin",
+    });
 
-    user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: updatedFields },
-      { new: true }
-    );
+    await adminUser.save();
 
-    res.status(200).json(user);
+    res.status(201).json({ message: "Admin created successfully", adminUser });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

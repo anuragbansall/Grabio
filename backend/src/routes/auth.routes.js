@@ -5,12 +5,16 @@ import {
   register,
   showProfile,
   updateProfile,
+  createAdmin,
 } from "../controllers/auth.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
+import { admin } from "../middlewares/admin.middleware.js";
 
 const router = express.Router();
 
 router.post("/register", register);
+
+router.post("/create-admin", protect, admin, createAdmin);
 
 router.post("/login", login);
 
