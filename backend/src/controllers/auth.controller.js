@@ -1,26 +1,71 @@
 import generateToken from "../utils/generateToken.js";
 import bcrypt from "bcryptjs";
 import User from "../models/user.model.js";
+import { generateOtp, sendOtpEmail } from "../utils/otp.js";
+import Otp from "../models/otp.model.js";
 
 export const register = async (req, res) => {
-  const { name, email, password, address } = req.body;
+  const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "Please fill in all fields" });
   }
 
   try {
-    // Check if user already exists
-    const user = await User.findOne({ email });
-
-    if (user) {
+    const userExists = await User.findOne({ email });
+    if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
+    const otp = generateOtp();
+    await sendOtpEmail(email, otp);
+
+    // Store hashed OTP to be more secure
+    const hashedOtp = await bcrypt.hash(otp.toString(), 10);
+
+    const otpData = new Otp({
+      email,
+      otp: hashedOtp,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+    await otpData.save();
+
+    res.status(200).json({ message: "OTP sent to email" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const verifyOtp = async (req, res) => {
+  const { name, email, password, address, otp } = req.body;
+
+  try {
+    const otpRecord = await Otp.findOne({ email });
+
+    if (!otpRecord) {
+      return res
+        .status(400)
+        .json({ message: "No OTP found, please register again" });
+    }
+
+    if (otpRecord.expiresAt < Date.now()) {
+      await Otp.deleteOne({ email });
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    const isOtpValid = await bcrypt.compare(otp.toString(), otpRecord.otp);
+    if (!isOtpValid) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const newUser = new User({
       name,
       email,
@@ -29,16 +74,16 @@ export const register = async (req, res) => {
       role: "user",
     });
 
-    if (newUser) {
-      await newUser.save();
-      generateToken(newUser._id, res);
-      res.status(201).json({ message: "User created successfully", newUser });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
+    await newUser.save();
+    await Otp.deleteMany({ email });
+
+    generateToken(newUser._id, res);
+    res
+      .status(201)
+      .json({ message: "User verified and created", user: newUser });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Verification failed" });
   }
 };
 

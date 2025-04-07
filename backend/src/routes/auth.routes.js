@@ -3,6 +3,7 @@ import {
   login,
   logout,
   register,
+  verifyOtp,
   showProfile,
   updateProfile,
   createAdmin,
@@ -13,6 +14,8 @@ import { admin } from "../middlewares/admin.middleware.js";
 const router = express.Router();
 
 router.post("/register", register);
+
+router.post("/verify-otp", verifyOtp);
 
 router.post("/create-admin", protect, admin, createAdmin);
 
