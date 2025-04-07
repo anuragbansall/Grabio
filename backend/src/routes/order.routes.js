@@ -1,25 +1,27 @@
 import express from "express";
+import { protect } from "../middlewares/auth.middleware.js";
+import { admin } from "../middlewares/admin.middleware.js";
+import {
+  createOrder,
+  deleteOrder,
+  getAllOrders,
+  getOrderById,
+  getUserOrders,
+  updateOrder,
+} from "../controllers/order.controller.js";
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  res.send("Create new order");
-});
+router.post("/", protect, createOrder);
 
-router.get("/", (req, res) => {
-  res.send("Get all orders");
-});
+router.get("/", protect, admin, getAllOrders);
 
-router.get("/:id", (req, res) => {
-  res.send("Get order by id");
-});
+router.get("/my-orders", protect, getUserOrders);
 
-router.put("/:id", (req, res) => {
-  res.send("Update order by id");
-});
+router.get("/:id", protect, getOrderById);
 
-router.delete("/:id", (req, res) => {
-  res.send("Delete order by id");
-});
+router.put("/:id", protect, updateOrder);
+
+router.delete("/:id", protect, admin, deleteOrder);
 
 export default router;
