@@ -3,7 +3,6 @@ dotenv.config();
 import transporter from "../config/nodemailer.js";
 
 const { MAIL_USER } = process.env;
-console.log(MAIL_USER);
 
 function sendMail(to, subject, text) {
   const mailOptions = {
